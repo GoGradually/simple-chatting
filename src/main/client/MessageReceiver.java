@@ -10,32 +10,26 @@ import java.net.Socket;
 import static main.LogUtils.log;
 
 public class MessageReceiver implements Runnable {
-
-    private final Socket socket;
+    private final Client client;
     private final DataInputStream inputStream;
-    private final DataOutputStream outputStream;
 
-    public MessageReceiver(Socket socket, DataInputStream inputStream, DataOutputStream outputStream) throws IOException {
-        this.socket = socket;
+    public MessageReceiver(Client client, DataInputStream inputStream) {
+        this.client = client;
         this.inputStream = inputStream;
-        this.outputStream = outputStream;
     }
 
     @Override
     public void run() {
-        while(true){
-            if(Thread.interrupted()){
-                CloseUtils.closeAll(socket, inputStream, outputStream);
-                return;
-            }
-            try {
+        try {
+            while (true) {
                 String s = inputStream.readUTF();
                 System.out.println(s);
-            } catch (IOException e) {
-                log(e.getMessage());
-                CloseUtils.closeAll(socket, inputStream, outputStream);
-                return;
             }
+        } catch (IOException e) {
+            log(e.getMessage());
+        }finally {
+            client.close();
         }
+
     }
 }

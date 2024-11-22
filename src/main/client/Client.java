@@ -12,36 +12,51 @@ import java.util.Scanner;
 import static main.LogUtils.log;
 
 public class Client {
-    public static void main(String[] args) throws IOException {
-        Socket socket = new Socket();
+    private final Socket socket;
+    private final DataInputStream inputStream;
+    private final DataOutputStream outputStream;
+    private final MessageReceiver messageReceiver;
+    private boolean closed = false;
+
+    public Client() throws IOException {
+        socket = new Socket();
         socket.connect(new InetSocketAddress("localhost", 45678), 1000);
-        DataInputStream inputStream = new DataInputStream(socket.getInputStream());
-        DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+        inputStream = new DataInputStream(socket.getInputStream());
+        outputStream = new DataOutputStream(socket.getOutputStream());
+        messageReceiver = new MessageReceiver(this, inputStream);
+    }
+
+    public void start() {
+        Thread inputThread = new Thread(messageReceiver, "clientInput");
+        inputThread.start();
+
+        Scanner scanner = new Scanner(System.in);
+
         try {
-            MessageReceiver messageReceiver = new MessageReceiver(socket, inputStream, outputStream);
-            Thread inputThread = new Thread(messageReceiver, "clientInput");
-            inputThread.start();
-
-            Scanner scanner = new Scanner(System.in);
-
             while (true) {
                 String input = scanner.nextLine();
-                try {
-                    outputStream.writeUTF(input);
-                    if(input.equals("/exit")){
-                        inputThread.interrupt();
-                        CloseUtils.closeAll(socket, inputStream, outputStream);
-                        return;
-                    }
-                } catch (IOException e) {
-                    log(e.getMessage());
+                outputStream.writeUTF(input);
+                if (input.equals("/exit")) {
+                    inputThread.interrupt();
                     CloseUtils.closeAll(socket, inputStream, outputStream);
                     return;
                 }
             }
+        } catch (IOException e) {
+            log(e.getMessage());
+        } finally {
+            close();
+        }
+    }
 
+    public synchronized void close() {
+        if (closed) return;
+        closed = true;
+        try {
+            System.in.close();
         } catch (IOException e) {
             log(e.getMessage());
         }
+        CloseUtils.closeAll(socket, inputStream, outputStream);
     }
 }
