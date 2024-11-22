@@ -5,18 +5,17 @@ import main.CloseUtils;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Scanner;
 
 import static main.LogUtils.log;
 
-public class ClientOutput implements Runnable {
+public class MessageReceiver implements Runnable {
+
     private final Socket socket;
     private final DataInputStream inputStream;
     private final DataOutputStream outputStream;
 
-    public ClientOutput(Socket socket, DataInputStream inputStream, DataOutputStream outputStream) throws IOException {
+    public MessageReceiver(Socket socket, DataInputStream inputStream, DataOutputStream outputStream) throws IOException {
         this.socket = socket;
         this.inputStream = inputStream;
         this.outputStream = outputStream;
@@ -24,12 +23,14 @@ public class ClientOutput implements Runnable {
 
     @Override
     public void run() {
-        while (true) {
-            System.out.print("메시지를 입력하세요.");
-            Scanner scanner = new Scanner(System.in);
-            String input = scanner.nextLine();
+        while(true){
+            if(Thread.interrupted()){
+                CloseUtils.closeAll(socket, inputStream, outputStream);
+                return;
+            }
             try {
-                outputStream.writeUTF(input);
+                String s = inputStream.readUTF();
+                System.out.println(s);
             } catch (IOException e) {
                 log(e.getMessage());
                 CloseUtils.closeAll(socket, inputStream, outputStream);

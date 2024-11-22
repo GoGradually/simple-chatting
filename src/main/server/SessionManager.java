@@ -15,10 +15,18 @@ public class SessionManager {
         sessions.remove(session);
     }
 
+    public void closeAllSessions(){
+        sessions.forEach(Session::close);
+    }
+
     public String getUserList(){
         return sessions.stream()
                 .map(Session::getUsername)
                 .collect(Collectors.joining(", "));
     }
 
+    public void spreadMessage(String message) {
+        sessions
+                .forEach(session -> session.receiveMessage(message));
+    }
 }
