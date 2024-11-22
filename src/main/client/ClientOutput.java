@@ -9,6 +9,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 
+import static main.LogUtils.log;
+
 public class ClientOutput implements Runnable {
     private final Socket socket;
     private final DataInputStream inputStream;
@@ -29,7 +31,7 @@ public class ClientOutput implements Runnable {
             try {
                 outputStream.writeUTF(input);
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                log(e.getMessage());
                 CloseUtils.closeAll(socket, inputStream, outputStream);
                 return;
             }

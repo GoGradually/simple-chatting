@@ -7,6 +7,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+import static main.LogUtils.log;
+
 public class ClientInput implements Runnable {
 
     private final Socket socket;
@@ -26,7 +28,7 @@ public class ClientInput implements Runnable {
                 String s = inputStream.readUTF();
                 System.out.println(s);
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                log(e.getMessage());
                 CloseUtils.closeAll(socket, inputStream, outputStream);
                 return;
             }
